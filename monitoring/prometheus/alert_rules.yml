@@ -1,0 +1,24 @@
+groups:
+  - name: automotive-service-health
+    rules:
+      - alert: ServiceTargetDown
+        expr: up{job=~"vehicle-service|telemetry-service|alert-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Automotive service target is down"
+          description: "Prometheus has been unable to scrape {{ $labels.job }} for at least one minute."
+
+      - alert: HighHttpFailureRatio
+        expr: |
+          sum by (job) (rate(http_requests_failed_total[5m]))
+          /
+          clamp_min(sum by (job) (rate(http_requests_total[5m])), 0.001)
+          > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Elevated HTTP failure ratio"
+          description: "The failure ratio for {{ $labels.job }} has exceeded 5% for five minutes."

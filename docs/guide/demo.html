@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101715">
+  <meta name="description" content="SAJIVITA live workbench for vehicle telemetry, health monitoring, and alerts.">
+  <title>SAJIVITA | Live Vehicle Monitoring</title>
+  <link rel="stylesheet" href="demo.css">
+  <script src="demo.js" defer></script>
+</head>
+<body>
+  <div class="demo-shell">
+    <header class="demo-header">
+      <a class="demo-brand" href="/guide"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span><b>SAJIVITA</b><small>VEHICLE TELEMETRY &amp; HEALTH MONITORING PLATFORM</small></span></a>
+      <div class="header-state"><span class="state-light" id="system-light"></span><span id="system-state">CONNECTING</span><span class="header-divider">/</span><span>LOCAL INSTANCE</span></div>
+      <a class="guide-link" href="/guide">Project guide <span aria-hidden="true">↗</span></a>
+    </header>
+
+    <main class="demo-main">
+      <section class="demo-heading">
+        <div>
+          <div class="eyebrow"><span></span> SAJIVITA / VEHICLE TELEMETRY / LIVE MONITORING</div>
+          <h1>Monitor every<br><em>signal.</em></h1>
+          <p>Vehicle Telemetry &amp; Health Monitoring Platform. Configure each vehicle, watch its readings, and follow alert conditions through recovery.</p>
+        </div>
+        <div class="clock-block"><span>LAST CHECK</span><strong id="last-check">--:--:--</strong><button id="refresh-button" type="button" title="Refresh health and metrics">Refresh status <span aria-hidden="true">↻</span></button></div>
+      </section>
+
+      <div class="start-notice" id="start-notice" role="status" hidden>
+        <span class="notice-icon">!</span><div><strong>The project services are not running.</strong><p>Open the project folder and double-click <code>START-DEMO.bat</code>. It starts the APIs and opens this live page automatically. <a href="../../START-DEMO.bat" download>Download the Windows launcher</a></p></div>
+      </div>
+
+      <section class="service-status" aria-label="Service health">
+        <article class="status-card" data-service="vehicle"><div class="status-card-top"><span>API / 01</span><span class="status-pill" id="vehicle-pill"><i></i> CHECKING</span></div><h2>Vehicle Service</h2><p>Registry · readiness · metrics</p><div class="status-card-foot"><code>127.0.0.1:8811</code><a href="http://127.0.0.1:8811/docs" target="_blank" rel="noopener noreferrer">API docs ↗</a></div></article>
+        <article class="status-card" data-service="telemetry"><div class="status-card-top"><span>API / 02</span><span class="status-pill" id="telemetry-pill"><i></i> CHECKING</span></div><h2>Telemetry Service</h2><p>Validation · dependency check · history</p><div class="status-card-foot"><code>127.0.0.1:8812</code><a href="http://127.0.0.1:8812/docs" target="_blank" rel="noopener noreferrer">API docs ↗</a></div></article>
+        <article class="status-card" data-service="alerts"><div class="status-card-top"><span>API / 03</span><span class="status-pill" id="alerts-pill"><i></i> CHECKING</span></div><h2>Alert Service</h2><p>Threshold rules · alert history</p><div class="status-card-foot"><code>127.0.0.1:8813</code><a href="http://127.0.0.1:8813/docs" target="_blank" rel="noopener noreferrer">API docs ↗</a></div></article>
+      </section>
+
+      <section class="active-alert-banner" id="active-alert-banner" aria-live="assertive" hidden>
+        <div class="banner-alert-mark">!</div><div class="banner-alert-copy"><span id="banner-alert-state">ACTIVE VEHICLE ALERT</span><strong id="banner-alert-title">Monitoring condition exceeded</strong><p id="banner-alert-message">The warning will remain visible until safe readings are received.</p></div>
+        <div class="banner-alert-actions"><span class="banner-alert-count" id="banner-alert-count">0 ACTIVE</span><button id="acknowledge-alerts" type="button" title="Acknowledge and dismiss the notice; monitoring continues">Acknowledge / close</button></div>
+      </section>
+
+      <section class="workbench-grid">
+        <article class="panel signal-panel">
+          <div class="panel-heading"><div><span class="panel-index">INTERACTIVE / 01</span><h2>Vehicle telemetry</h2></div><span class="panel-symbol">⌁</span></div>
+          <p class="panel-intro">Send a one-off reading or start the synthetic simulator. The simulator repeats your current values so duration rules can be observed.</p>
+          <form id="signal-form">
+            <label class="field field-vehicle"><span>SELECT MONITORED VEHICLE</span><select id="vehicle-id" name="vehicle_id"><option value="VW-1001">VW-1001 · ID.4 · ACTIVE</option><option value="VW-1002">VW-1002 · ID.3 · MAINTENANCE</option></select></label>
+            <div class="field-grid">
+              <label class="field"><span>SPEED <small>km/h</small></span><input id="speed" name="speed" type="number" min="0" max="500" step="1" value="150" required></label>
+              <label class="field"><span>ENGINE RPM</span><input id="rpm" name="rpm" type="number" min="0" max="30000" step="100" value="3200" required></label>
+              <label class="field field-wide"><span>BATTERY TEMPERATURE <small>°C</small></span><input id="temperature" name="battery_temperature" type="number" min="-40" max="200" step="0.5" value="38.5" required></label>
+            </div>
+            <div class="threshold-hint" id="threshold-hint"><span>SELECTED VEHICLE LIMITS</span><b>Speed 140 km/h</b><b>RPM 5000</b><b>Battery 50°C</b></div>
+            <div class="signal-actions"><button class="submit-button" id="submit-button" type="submit"><span class="submit-icon">↗</span><span>Send one reading</span><kbd>ENTER</kbd></button><button class="simulate-button" id="simulate-button" type="button"><span aria-hidden="true">▶</span><span id="simulate-label">Start live simulation</span></button></div>
+          </form>
+          <div class="request-result" id="request-result" aria-live="polite"><span class="result-mark">—</span><span>Ready. Edit the selected vehicle's readings, then send or simulate.</span></div>
+          <div class="latest-reading" id="latest-reading"><span>LATEST ACCEPTED READING</span><strong id="latest-reading-values">No telemetry received in this session.</strong><small id="latest-reading-time">Send a reading to populate this panel.</small></div>
+          <div class="pending-list" id="pending-list" aria-live="polite"></div>
+        </article>
+
+        <article class="panel performance-panel">
+          <div class="panel-heading"><div><span class="panel-index">OBSERVABILITY / 02</span><h2>Performance snapshot</h2></div><span class="panel-symbol">⌁</span></div>
+          <div class="metrics-grid">
+            <div class="metric-box"><span>API CALLS</span><strong id="metric-calls">—</strong><small>Prometheus counters</small></div>
+            <div class="metric-box"><span>FAILED CALLS</span><strong id="metric-failures">—</strong><small>5xx responses</small></div>
+            <div class="metric-box"><span>LAST ROUND TRIP</span><strong id="metric-latency">—</strong><small>Browser-observed ms</small></div>
+            <div class="metric-box"><span>DEMO SUCCESS</span><strong id="metric-success">—</strong><small>Successful demo calls</small></div>
+          </div>
+          <div class="chart-heading"><span>ROUND-TRIP HISTORY</span><span>LOCAL SESSION · LAST 12 CALLS</span></div>
+          <div class="latency-chart"><canvas id="latency-chart" aria-label="Chart of browser-observed request durations"></canvas><div class="chart-empty" id="chart-empty">Send a signal to record performance</div></div>
+          <div class="metrics-foot"><span><i></i> API METRICS LIVE</span><a href="http://127.0.0.1:8812/metrics" target="_blank" rel="noopener noreferrer">Raw Telemetry metrics ↗</a></div>
+        </article>
+      </section>
+
+      <section class="profile-grid">
+        <article class="panel profile-panel">
+          <div class="panel-heading"><div><span class="panel-index">VEHICLE SETTINGS / 03</span><h2>Monitoring preferences</h2></div><span class="panel-symbol">⚙</span></div>
+          <p class="panel-intro">Editing limits for <strong id="preferences-vehicle-name">the selected vehicle</strong>. Limits belong to that vehicle only; temperature duration is how long it must remain high before alerting.</p>
+          <form id="preferences-form">
+            <div class="preference-grid">
+              <label class="field"><span>SPEED LIMIT <small>km/h</small></span><input id="pref-speed" type="number" min="1" max="500" step="1" value="140" required></label>
+              <label class="field"><span>SPEED HOLD <small>seconds</small></span><input id="pref-speed-duration" type="number" min="0" max="86400" step="1" value="0" required></label>
+              <label class="field"><span>RPM LIMIT</span><input id="pref-rpm" type="number" min="1" max="30000" step="1" value="5000" required></label>
+              <label class="field"><span>RPM HOLD <small>seconds</small></span><input id="pref-rpm-duration" type="number" min="0" max="86400" step="1" value="0" required></label>
+              <label class="field"><span>BATTERY LIMIT <small>°C</small></span><input id="pref-temperature" type="number" min="-40" max="150" step="0.5" value="50" required></label>
+              <label class="field"><span>TEMPERATURE HOLD <small>seconds</small></span><input id="pref-temperature-duration" type="number" min="0" max="86400" step="1" value="3600" required></label>
+            </div>
+            <button class="save-preferences" type="submit">Save limits for selected vehicle <span aria-hidden="true">✓</span></button>
+          </form>
+        </article>
+        <article class="panel register-panel">
+          <div class="panel-heading"><div><span class="panel-index">FLEET / 04</span><h2>Add your vehicle</h2></div><span class="panel-symbol">＋</span></div>
+          <p class="panel-intro">Give it an ID and model name. New vehicles start with the limits shown in Monitoring preferences.</p>
+          <form id="register-form" class="register-form">
+            <label class="field"><span>VEHICLE ID</span><input id="new-vehicle-id" type="text" maxlength="64" pattern="[-A-Za-z0-9_]+" placeholder="e.g. FLEET-204" required></label>
+            <label class="field"><span>VEHICLE MODEL</span><input id="new-vehicle-model" type="text" maxlength="100" placeholder="e.g. City EV" required></label>
+            <button class="save-preferences" type="submit">Register vehicle <span aria-hidden="true">＋</span></button>
+          </form>
+          <div class="profile-feedback" id="profile-feedback" aria-live="polite"></div>
+        </article>
+      </section>
+
+      <section class="lower-grid">
+        <article class="panel fleet-panel">
+          <div class="panel-heading"><div><span class="panel-index">REGISTRY / 05</span><h2>Sample fleet</h2></div><span class="fleet-count" id="fleet-count">— VEHICLES</span></div>
+          <div class="table-wrap"><table><thead><tr><th>VEHICLE</th><th>MODEL</th><th>STATUS</th></tr></thead><tbody id="vehicle-rows"><tr><td colspan="3" class="empty-row">Waiting for Vehicle Service</td></tr></tbody></table></div>
+        </article>
+        <article class="panel alerts-panel">
+          <div class="panel-heading"><div><span class="panel-index">RULE ENGINE / 06</span><h2>Alert history</h2><p class="panel-hint">Showing alerts for the selected vehicle only. Acknowledging closes the notice; it does not clear an active condition.</p></div><span class="alert-count" id="alert-count">0</span></div>
+          <div class="alert-list" id="alert-list"><div class="empty-alert">No alerts loaded yet. Send a signal to test the thresholds.</div></div>
+        </article>
+      </section>
+
+      <section class="panel activity-panel">
+        <div class="panel-heading"><div><span class="panel-index">TRACE / 07</span><h2>Recent demo activity</h2></div><span class="activity-note">REQUEST IDs FOLLOW THE TELEMETRY LOOKUP</span></div>
+        <div class="activity-list" id="activity-list"><div class="activity-empty">Activity appears here when the dashboard checks health or sends a sample signal.</div></div>
+      </section>
+
+      <div class="scope-line"><span>LOCAL DEMO / SYNTHETIC SAMPLE INPUTS</span><span>NO HARDWARE CONNECTION · NO CONTROL COMMANDS</span><a href="/guide#boundaries">Not for vehicle control · Read safety scope →</a></div>
+    </main>
+    <footer class="demo-footer">
+      <a class="footer-brand" href="/guide">SAJIVITA</a>
+      <span class="footer-tagline">Vehicle Telemetry &amp; Health Monitoring Platform</span>
+      <div class="footer-author"><span class="copyright-mark">©</span><span>2026 · Created by <strong>Shaik Sajid</strong></span></div>
+      <nav class="footer-profiles" aria-label="Shaik Sajid profiles">
+        <a href="https://www.linkedin.com/in/-12345shaik-sajid/" target="_blank" rel="noopener noreferrer">LinkedIn <span aria-hidden="true">↗</span></a>
+        <a href="https://github.com/thazbi" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+        <a href="https://portfolio-main-ten-silk.vercel.app/" target="_blank" rel="noopener noreferrer">Portfolio <span aria-hidden="true">↗</span></a>
+      </nav>
+      <span class="footer-scope">LOCAL LEARNING DEMO · NOT VEHICLE CONTROL</span>
+    </footer>
+  </div>
+  <div class="demo-toast" id="demo-toast" role="status" aria-live="polite"></div>
+</body>
+</html>

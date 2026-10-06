@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101211">
+  <meta name="description" content="SAJIVITA is a vehicle telemetry and health monitoring reference platform. Explore the architecture, run the demo, configure vehicle limits, and monitor alerts.">
+  <title>SAJIVITA | Vehicle Telemetry &amp; Health Monitoring</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="guide.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to guide</a>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="Guide navigation">
+      <a class="brand" href="#overview" aria-label="SAJIVITA home">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="brand-copy"><strong>SAJIVITA</strong><small>VEHICLE TELEMETRY &amp; HEALTH MONITORING PLATFORM</small></span>
+      </a>
+      <div class="sidebar-caption">PROJECT GUIDE</div>
+      <nav class="toc" id="toc">
+        <a class="toc-link is-active" href="#overview" data-search="overview project purpose introduction"><span>01</span> Overview</a>
+        <a class="toc-link" href="#architecture" data-search="architecture services system diagram"><span>02</span> System map</a>
+        <a class="toc-link" href="#run" data-search="run start docker compose powershell setup"><span>03</span> Run locally</a>
+        <a class="toc-link" href="#workflow" data-search="workflow api telemetry vehicle alert request example"><span>04</span> Send a reading</a>
+        <a class="toc-link" href="#monitor" data-search="monitor grafana prometheus loki metrics logs health"><span>05</span> Monitor it</a>
+        <a class="toc-link" href="#operate" data-search="operate troubleshooting stop ports logs reset"><span>06</span> Operate &amp; debug</a>
+        <a class="toc-link" href="#quality" data-search="tests quality ci ruff black pytest typecheck"><span>07</span> Quality checks</a>
+        <a class="toc-link" href="#boundaries" data-search="limits production security safety gaps next steps"><span>08</span> Boundaries</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span><strong>REFERENCE BUILD</strong><small>Local learning stack</small></span>
+      </div>
+    </aside>
+
+    <div class="page-column">
+      <header class="topbar">
+        <button class="menu-toggle icon-button" id="menu-toggle" type="button" aria-label="Open guide navigation" aria-expanded="false"><span></span><span></span></button>
+        <div class="breadcrumbs"><span>SAJIVITA</span><b>/</b><strong>PLATFORM GUIDE</strong></div>
+        <label class="search-box">
+          <span class="search-icon" aria-hidden="true">⌕</span>
+          <input id="guide-search" type="search" placeholder="Find a topic" autocomplete="off" aria-label="Find a guide section">
+          <kbd>/</kbd>
+        </label>
+        <a class="repo-link" href="demo.html">Check on project <span aria-hidden="true">↗</span></a>
+      </header>
+
+      <main id="main">
+        <section class="intro section-anchor" id="overview">
+          <div class="intro-copy">
+            <div class="eyebrow"><span class="eyebrow-line"></span> VEHICLE TELEMETRY &amp; HEALTH MONITORING PLATFORM</div>
+            <h1>SAJIVITA<br><em>Every signal matters.</em></h1>
+            <p class="intro-lede">A practical vehicle-monitoring platform for registering vehicles, setting individual operating limits, following telemetry, and understanding alerts as they happen.</p>
+            <div class="intro-actions">
+              <a class="button button-primary" href="demo.html">Check on project <span aria-hidden="true">↗</span></a>
+              <a class="text-link" href="#run">How to run the project <span aria-hidden="true">↓</span></a>
+              <a class="text-link" href="#architecture">Explore the platform <span aria-hidden="true">↓</span></a>
+            </div>
+            <div class="author-line">
+              <span class="author-label">PROJECT BY</span>
+              <strong>SHAIK SAJID</strong>
+              <a href="https://www.linkedin.com/in/-12345shaik-sajid/" target="_blank" rel="noopener noreferrer">LinkedIn <span aria-hidden="true">↗</span></a>
+              <a href="https://github.com/thazbi" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+            </div>
+          </div>
+          <div class="intro-index" aria-label="Project summary">
+            <div class="index-top"><span>SAJIVITA / PLATFORM</span><span class="index-signal"><i></i><i></i><i></i><i></i></span></div>
+            <div class="index-title">VEHICLE<br>TELEMETRY<br>&amp; HEALTH</div>
+            <div class="index-rule"></div>
+            <div class="index-stats">
+              <div><strong>03</strong><span>API SERVICES</span></div>
+              <div><strong>03</strong><span>OBSERVABILITY TOOLS</span></div>
+            </div>
+            <div class="index-foot"><span>VEHICLE · TELEMETRY · ALERTS</span><span>PY 3.11</span></div>
+          </div>
+        </section>
+
+        <div class="notice-bar"><span class="notice-mark">!</span><p><strong>Scope note</strong> This is a local reference and learning system, not certified software for controlling or making safety decisions about real vehicles.</p><a href="#boundaries">Read the limits <span aria-hidden="true">→</span></a></div>
+
+        <section class="content-section section-anchor" id="architecture">
+          <div class="section-heading">
+            <div><div class="eyebrow"><span class="eyebrow-line"></span> 01 / SYSTEM MAP</div><h2>Small services.<br><em>Clear responsibilities.</em></h2></div>
+            <p class="section-summary">Each API owns one job. The observability tools sit beside them and inspect the system rather than owning business data.</p>
+          </div>
+          <div class="architecture-board" aria-label="System architecture flow diagram">
+            <div class="board-topline"><span>LOCAL COMPOSE NETWORK</span><span class="board-live"><i></i> REQUEST / TELEMETRY PATH</span></div>
+            <div class="flow-lane">
+              <div class="flow-node client-node"><span class="node-number">01</span><span class="node-glyph glyph-client">↗</span><strong>YOU / CLIENT</strong><small>PowerShell · API docs</small></div>
+              <div class="flow-connector"><span>HTTP / JSON</span><i></i></div>
+              <div class="flow-node telemetry-node"><span class="node-number">02</span><span class="node-glyph glyph-pulse">⌁</span><strong>TELEMETRY</strong><small>Validate &amp; record</small><b>:8002</b></div>
+              <div class="flow-connector"><span>LOOK UP VEHICLE</span><i></i></div>
+              <div class="flow-node vehicle-node"><span class="node-number">03</span><span class="node-glyph glyph-car">▰</span><strong>VEHICLE</strong><small>Registry &amp; health</small><b>:8001</b></div>
+            </div>
+            <div class="flow-branch"><span class="branch-line"></span><span class="branch-label">SECOND EXPLICIT CALL</span></div>
+            <div class="flow-lane flow-lane-lower">
+              <div class="flow-node alert-node"><span class="node-number">04</span><span class="node-glyph glyph-alert">!</span><strong>ALERTS</strong><small>Compare thresholds</small><b>:8003</b></div>
+              <div class="flow-connector observability-connector"><span>SCRAPE METRICS / COLLECT LOGS</span><i></i></div>
+              <div class="observability-nodes">
+                <div class="mini-node prom-node"><strong>PROMETHEUS</strong><small>Metrics &amp; rules</small><b>:9090</b></div>
+                <div class="mini-node grafana-node"><strong>GRAFANA</strong><small>Dashboards</small><b>:3000</b></div>
+                <div class="mini-node loki-node"><strong>LOKI + ALLOY</strong><small>Container logs</small><b>:3100</b></div>
+              </div>
+            </div>
+            <div class="board-foot"><span>01 → 02 → 03: VEHICLE LOOKUP IS REQUIRED TO ACCEPT TELEMETRY</span><span>ALL DATA STORES ARE IN-MEMORY</span></div>
+          </div>
+          <div class="service-grid">
+            <article class="service-card"><div class="card-index">SERVICE 01 <span>REGISTRY</span></div><h3>Vehicle Service</h3><p>Registers vehicles and stores each vehicle's monitoring limits and persistence durations in local memory.</p><a href="http://127.0.0.1:8811/docs">Open API docs <span>↗</span></a></article>
+            <article class="service-card"><div class="card-index">SERVICE 02 <span>INGESTION</span></div><h3>Telemetry Service</h3><p>Validates readings, confirms the vehicle exists with a timeout, and stores accepted samples in process memory.</p><a href="http://127.0.0.1:8812/docs">Open API docs <span>↗</span></a></article>
+            <article class="service-card"><div class="card-index">SERVICE 03 <span>RULE ENGINE</span></div><h3>Alert Service</h3><p>Tracks pending threshold durations, maintains active alerts, and records clear events after recovery.</p><a href="http://127.0.0.1:8813/docs">Open API docs <span>↗</span></a></article>
+          </div>
+        </section>
+
+        <section class="content-section section-anchor section-tint" id="run">
+          <div class="section-heading">
+            <div><div class="eyebrow"><span class="eyebrow-line"></span> 02 / QUICK START</div><h2>Start with<br><em>the whole stack.</em></h2></div>
+            <p class="section-summary">For the live project preview, use the one-click Windows launcher. Docker Compose is available when you want the full monitoring stack.</p>
+          </div>
+          <div class="launcher-callout">
+            <span class="launcher-icon">01</span>
+            <div><strong>Just want to see the project work?</strong><p>In the repository folder, double-click <code>START-DEMO.bat</code>. It prepares Python, starts all APIs, checks their health, and opens the live dashboard. Keep its terminal window open.</p></div>
+            <a href="../../START-DEMO.bat" download>Windows launcher <span aria-hidden="true">↓</span></a>
+          </div>
+          <p class="browser-boundary">Opening this HTML file alone cannot start local services; browser security blocks webpages from running commands on your computer. Use the launcher first.</p>
+          <div class="run-layout">
+            <div class="run-steps">
+              <div class="run-step"><span class="step-number">1</span><div><h3>Prepare local settings</h3><p>Copy the sample environment file. Edit the Grafana password before starting.</p></div></div>
+              <div class="run-step"><span class="step-number">2</span><div><h3>Build and start</h3><p>The first run builds Python service images and pulls the monitoring images.</p></div></div>
+              <div class="run-step"><span class="step-number">3</span><div><h3>Confirm service health</h3><p>Wait until Compose reports healthy API services, then open their docs or dashboards.</p></div></div>
+            </div>
+            <div class="code-panel">
+              <div class="code-toolbar"><div class="code-file"><span class="terminal-mark">&gt;_</span><span>POWERSHELL / PROJECT ROOT</span></div><button class="copy-button" type="button" data-copy="compose-start" aria-label="Copy Docker Compose startup commands">Copy <span>⧉</span></button></div>
+              <pre><code id="compose-start">Copy-Item .env.example .env
+notepad .env
+# Set GRAFANA_ADMIN_PASSWORD, then save
+
+docker compose up --build -d
+docker compose ps</code></pre>
+              <div class="code-foot"><span><i class="green-dot"></i> RUN FROM THE REPOSITORY ROOT</span><span>FIRST BUILD MAY TAKE A FEW MINUTES</span></div>
+            </div>
+          </div>
+          <div class="endpoint-strip">
+            <div class="endpoint-label">LOCAL<br>ENDPOINTS</div>
+            <a href="http://127.0.0.1:8001/docs"><span>COMPOSE VEHICLE API</span><strong>127.0.0.1:8001</strong><small>/docs · Compose</small></a>
+            <a href="http://127.0.0.1:8002/docs"><span>COMPOSE TELEMETRY API</span><strong>127.0.0.1:8002</strong><small>/docs · Compose</small></a>
+            <a href="http://127.0.0.1:8003/docs"><span>COMPOSE ALERT API</span><strong>127.0.0.1:8003</strong><small>/docs · Compose</small></a>
+            <a href="http://127.0.0.1:3000"><span>GRAFANA</span><strong>127.0.0.1:3000</strong><small>login from .env</small></a>
+            <a href="http://127.0.0.1:9090"><span>PROMETHEUS</span><strong>127.0.0.1:9090</strong><small>/targets</small></a>
+          </div>
+          <div class="stop-row"><span><b>To stop:</b> <code>docker compose down</code></span><span><b>To remove local monitoring volumes too:</b> <code>docker compose down -v</code></span></div>
+        </section>
+
+        <section class="content-section section-anchor" id="workflow">
+          <div class="section-heading">
+            <div><div class="eyebrow"><span class="eyebrow-line"></span> 03 / FIRST REQUEST</div><h2>Send a reading.<br><em>Follow the response.</em></h2></div>
+            <p class="section-summary">Register or select a vehicle, save its own limits, then send repeated readings. Sustained conditions show a pending timer before an alert becomes active.</p>
+          </div>
+          <div class="workflow-grid">
+            <div class="workflow-copy">
+              <div class="numbered-callout"><span>01</span><div><strong>Check readiness</strong><code>GET /health/ready</code><p>Telemetry checks its Vehicle Service dependency here. `UP` means it is ready to receive requests.</p></div></div>
+              <div class="numbered-callout"><span>02</span><div><strong>Post repeated readings</strong><code>POST /telemetry</code><p>Every reading is validated and checked against the registered vehicle. The demo simulator repeats synthetic samples every three seconds.</p></div></div>
+              <div class="numbered-callout"><span>03</span><div><strong>Evaluate each reading</strong><code>POST /alerts/evaluate</code><p>Alert Service reads that vehicle's saved thresholds. It reports pending time, active alerts, and cleared alerts after recovery.</p></div></div>
+            </div>
+            <div class="code-panel workflow-code">
+              <div class="code-toolbar"><div class="code-file"><span class="terminal-mark">&gt;_</span><span>POWERSHELL / SAMPLE FLOW</span></div><button class="copy-button" type="button" data-copy="api-sample" aria-label="Copy telemetry and alert API sample">Copy <span>⧉</span></button></div>
+              <pre><code id="api-sample">$reading = @{
+  vehicle_id = "VW-1001"
+  speed = 150
+  rpm = 3200
+  battery_temperature = 38.5
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri "http://127.0.0.1:8002/telemetry" `
+  -Method Post -ContentType "application/json" -Body $reading
+
+Invoke-RestMethod -Uri "http://127.0.0.1:8003/alerts/evaluate" `
+  -Method Post -ContentType "application/json" -Body $reading</code></pre>
+              <div class="code-foot"><span><i class="green-dot"></i> EXPECT 201, THEN AN EVALUATION RESULT</span><span>USE COMPOSE/MANUAL PORTS IN THIS EXAMPLE</span></div>
+            </div>
+          </div>
+          <div class="response-grid">
+            <div class="response-card response-success"><span class="http-code">201</span><div><strong>Telemetry accepted</strong><p>Vehicle exists and values passed validation. The reading is stored in memory.</p></div></div>
+            <div class="response-card response-client"><span class="http-code">422</span><div><strong>Invalid reading</strong><p>One or more submitted values violate the request model’s constraints.</p></div></div>
+            <div class="response-card response-failure"><span class="http-code">503</span><div><strong>Dependency unavailable</strong><p>Vehicle Service is unreachable or did not confirm the vehicle ID.</p></div></div>
+          </div>
+          <div class="inline-note"><strong>Important:</strong> The dashboard sends the same sample to Telemetry and Alert Service as two API calls. The simulator uses synthetic data only; no vehicle hardware is connected. If a service restarts, its in-memory records are lost.</div>
+        </section>
+
+        <section class="content-section section-anchor section-tint" id="monitor">
+          <div class="section-heading">
+            <div><div class="eyebrow"><span class="eyebrow-line"></span> 04 / OBSERVABILITY</div><h2>Know where<br><em>to look.</em></h2></div>
+            <p class="section-summary">Use readiness for traffic eligibility, liveness for process checks, Prometheus for time-series metrics, and Grafana/Loki to explore signals.</p>
+          </div>
+          <div class="monitor-layout">
+            <div class="monitor-table-wrap">
+              <table class="monitor-table">
+                <thead><tr><th>QUESTION</th><th>CHECK</th><th>GOOD SIGNAL</th></tr></thead>
+                <tbody>
+                  <tr><td>Is the process alive?</td><td><code>/health/live</code></td><td><span class="table-good">200 · UP</span></td></tr>
+                  <tr><td>Can it serve traffic?</td><td><code>/health/ready</code></td><td><span class="table-good">200 · dependencies UP</span></td></tr>
+                  <tr><td>Are requests failing?</td><td><code>/metrics</code></td><td>failure counter stable</td></tr>
+                  <tr><td>Are targets scraped?</td><td><code>:9090/targets</code></td><td><span class="table-good">all API targets UP</span></td></tr>
+                  <tr><td>What is the latency trend?</td><td>Grafana dashboard</td><td>p95 series visible</td></tr>
+                  <tr><td>What did a request log?</td><td>Grafana Explore · Loki</td><td>filter by service/container</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <aside class="monitor-aside"><div class="aside-index">OPERATOR NOTE / 04A</div><h3>UP is not the whole story.</h3><p>Liveness says a process responds. Readiness says it can accept work. Telemetry readiness also checks Vehicle Service, so it can be live but not ready.</p><a href="http://127.0.0.1:9090/targets">Inspect Prometheus targets <span>↗</span></a></aside>
+          </div>
+          <div class="metric-row">
+            <div class="metric-label"><span>METRIC FIELD GUIDE</span><strong>Start with these queries</strong></div>
+            <div class="metric-query"><code>up{job=~"vehicle-service|telemetry-service|alert-service"}</code><span>Service scrape health</span></div>
+            <div class="metric-query"><code>rate(http_requests_total[5m])</code><span>Request throughput</span></div>
+            <div class="metric-query"><code>rate(http_requests_failed_total[5m])</code><span>Failed request rate</span></div>
+          </div>
+          <div class="log-note"><div class="log-symbol">≋</div><div><strong>Request correlation</strong><p>Send an <code>X-Request-ID</code> header to keep a request identifiable across Telemetry’s Vehicle lookup. If omitted, the services generate an ID and return it in the response.</p></div><div class="log-example"><code>X-Request-ID: demo-run-001</code></div></div>
+        </section>
+
+        <section class="content-section section-anchor" id="operate">
+          <div class="section-heading">
+            <div><div class="eyebrow"><span class="eyebrow-line"></span> 05 / OPERATIONS</div><h2>When something<br><em>doesn’t look right.</em></h2></div>
+            <p class="section-summary">A short checklist for common first-run problems. Run commands from the repository root unless noted.</p>
+          </div>
+          <div class="troubleshoot-list">
+            <details class="trouble-item"><summary><span class="trouble-code">10048</span><strong>Address already in use</strong><span class="summary-hint">Port is occupied</span><b>+</b></summary><div class="trouble-body"><p>A service is already listening on that port. Check whether a previous instance is still running before starting another copy:</p><pre><code>Get-NetTCPConnection -LocalPort 8001,8002,8003 -State Listen</code></pre><p>Stop the existing Uvicorn terminal with <kbd>Ctrl</kbd> + <kbd>C</kbd>, or choose another host port.</p></div></details>
+            <details class="trouble-item"><summary><span class="trouble-code">503</span><strong>Telemetry cannot reach Vehicle Service</strong><span class="summary-hint">Check the dependency URL</span><b>+</b></summary><div class="trouble-body"><p>In local Python mode, set the environment variable before starting Telemetry:</p><pre><code>$env:VEHICLE_SERVICE_URL = "http://127.0.0.1:8001"</code></pre><p>In Compose, Telemetry uses the internal service hostname `vehicle-service:8000` automatically.</p></div></details>
+            <details class="trouble-item"><summary><span class="trouble-code">DOWN</span><strong>A service is live but not ready</strong><span class="summary-hint">Inspect dependencies</span><b>+</b></summary><div class="trouble-body"><p>Check that the Vehicle API responds at <code>http://127.0.0.1:8001/health/live</code> and that Telemetry has the correct `VEHICLE_SERVICE_URL`. Readiness is dependency-aware; liveness intentionally is not.</p></div></details>
+            <details class="trouble-item"><summary><span class="trouble-code">LOGS</span><strong>Inspect container output</strong><span class="summary-hint">Compose logs</span><b>+</b></summary><div class="trouble-body"><pre><code>docker compose ps
+docker compose logs -f --tail=100 telemetry-service
+docker compose logs -f alert-service</code></pre></div></details>
+            <details class="trouble-item"><summary><span class="trouble-code">RESET</span><strong>Restart or clear local monitoring data</strong><span class="summary-hint">Use with care</span><b>+</b></summary><div class="trouble-body"><pre><code>docker compose restart telemetry-service
+docker compose down
+# Destructive for local Grafana, Prometheus, and Loki volumes:
+docker compose down -v</code></pre><p>API business records are in process memory and are cleared when their service restarts.</p></div></details>
+          </div>
+        </section>
+
+        <section class="content-section section-anchor section-tint" id="quality">
+          <div class="section-heading">
+            <div><div class="eyebrow"><span class="eyebrow-line"></span> 06 / ENGINEERING QUALITY</div><h2>Repeatable checks<br><em>before every change.</em></h2></div>
+            <p class="section-summary">The default test command discovers foundation and all service suites. GitHub Actions runs the same core Python checks on pushes and pull requests.</p>
+          </div>
+          <div class="quality-layout">
+            <div class="code-panel quality-code">
+              <div class="code-toolbar"><div class="code-file"><span class="terminal-mark">&gt;_</span><span>POWERSHELL / LOCAL CHECKS</span></div><button class="copy-button" type="button" data-copy="quality-commands" aria-label="Copy Python quality commands">Copy <span>⧉</span></button></div>
+              <pre><code id="quality-commands">.\.venv\Scripts\python -m pytest
+.\.venv\Scripts\python -m ruff check .
+.\.venv\Scripts\python -m black --check .
+.\.venv\Scripts\python -m mypy services</code></pre>
+              <div class="code-foot"><span><i class="green-dot"></i> PYTHON 3.11</span><span>RUN FROM PROJECT ROOT</span></div>
+            </div>
+            <div class="quality-facts"><div><span>TESTS</span><strong>Pytest</strong><small>API contracts &amp; validation</small></div><div><span>STYLE</span><strong>Ruff + Black</strong><small>Lint &amp; consistent formatting</small></div><div><span>TYPES</span><strong>MyPy</strong><small>Static checks for services</small></div><div><span>CI</span><strong>GitHub Actions</strong><small>Push + pull request workflow</small></div></div>
+          </div>
+        </section>
+
+        <section class="content-section section-anchor" id="boundaries">
+          <div class="section-heading">
+            <div><div class="eyebrow"><span class="eyebrow-line"></span> 07 / READ BEFORE DEPLOYING</div><h2>Useful reference.<br><em>Not vehicle control.</em></h2></div>
+            <p class="section-summary">The project demonstrates service boundaries and observability patterns. It is deliberately not a production fleet platform or a certified automotive system.</p>
+          </div>
+          <div class="boundary-grid">
+            <article class="boundary-card boundary-warning"><span class="boundary-icon">01</span><div><h3>Data is volatile</h3><p>Vehicle, telemetry, and alert business data live in process memory. Restarting services clears it; there is no database, broker, or durable event delivery.</p></div></article>
+            <article class="boundary-card"><span class="boundary-icon">02</span><div><h3>APIs are unauthenticated</h3><p>Local Compose ports bind to loopback, but there is no user/device identity, authorization, or TLS. Do not expose these APIs publicly.</p></div></article>
+            <article class="boundary-card"><span class="boundary-icon">03</span><div><h3>Alert delivery is not durable</h3><p>The demo explicitly sends each reading to Alert Service, but it has no durable event pipeline, deduplication, paging integration, or incident lifecycle.</p></div></article>
+            <article class="boundary-card"><span class="boundary-icon">04</span><div><h3>No hardware or safety case</h3><p>No vehicle bus protocols, actuator commands, device provisioning, functional-safety analysis, certification, or regulatory approval is included.</p></div></article>
+            <article class="boundary-card"><span class="boundary-icon">05</span><div><h3>Local observability has privileges</h3><p>Alloy reads Docker container metadata through the local Docker socket. Treat that as privileged access and keep the stack on a trusted development host.</p></div></article>
+            <article class="boundary-card boundary-next"><span class="boundary-icon">NEXT</span><div><h3>What production would require</h3><p>Threat and safety review, identity/access control, TLS, durable storage and delivery, HA/backup/recovery, image/dependency scanning, and operational ownership.</p></div></article>
+          </div>
+          <div class="closing-band"><div><span>YOU’VE GOT THE MAP.</span><h2>Now follow a signal<br><em>all the way through.</em></h2></div><a class="button button-light" href="#run">Back to quick start <span aria-hidden="true">↑</span></a></div>
+        </section>
+      </main>
+      <footer class="site-footer">
+        <a class="footer-brand" href="#overview">SAJIVITA</a>
+        <span class="footer-tagline">Vehicle Telemetry &amp; Health Monitoring Platform</span>
+        <div class="footer-author"><span class="copyright-mark">©</span><span>2026 · Created by <strong>Shaik Sajid</strong></span></div>
+        <nav class="footer-profiles" aria-label="Shaik Sajid profiles">
+          <a href="https://www.linkedin.com/in/-12345shaik-sajid/" target="_blank" rel="noopener noreferrer">LinkedIn <span aria-hidden="true">↗</span></a>
+          <a href="https://github.com/thazbi" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+          <a href="https://portfolio-main-ten-silk.vercel.app/" target="_blank" rel="noopener noreferrer">Portfolio <span aria-hidden="true">↗</span></a>
+        </nav>
+        <span class="footer-scope">LEARNING PLATFORM · NOT VEHICLE CONTROL</span>
+      </footer>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

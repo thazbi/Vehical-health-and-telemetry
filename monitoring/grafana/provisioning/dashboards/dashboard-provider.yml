@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: Automotive Monitoring
+    orgId: 1
+    folder: Automotive
+    type: file
+    disableDeletion: true
+    editable: false
+    options:
+      path: /var/lib/grafana/dashboards

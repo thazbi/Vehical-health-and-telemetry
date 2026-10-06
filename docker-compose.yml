@@ -1,0 +1,132 @@
+services:
+  vehicle-service:
+    build:
+      context: .
+      dockerfile: services/vehicle_service/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${VEHICLE_PORT:-8001}:8000"
+    environment:
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=2)"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    networks: [app]
+
+  telemetry-service:
+    build:
+      context: .
+      dockerfile: services/telemetry_service/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${TELEMETRY_PORT:-8002}:8000"
+    environment:
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      VEHICLE_SERVICE_URL: http://vehicle-service:8000
+      SERVICE_TIMEOUT_SECONDS: ${SERVICE_TIMEOUT_SECONDS:-2}
+    depends_on:
+      vehicle-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/live', timeout=2)"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    networks: [app]
+
+  alert-service:
+    build:
+      context: .
+      dockerfile: services/alert_service/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${ALERT_PORT:-8003}:8000"
+    environment:
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      VEHICLE_SERVICE_URL: http://vehicle-service:8000
+      SERVICE_TIMEOUT_SECONDS: ${SERVICE_TIMEOUT_SECONDS:-2}
+      BATTERY_TEMPERATURE_THRESHOLD: ${BATTERY_TEMPERATURE_THRESHOLD:-50}
+      RPM_THRESHOLD: ${RPM_THRESHOLD:-5000}
+      SPEED_THRESHOLD: ${SPEED_THRESHOLD:-140}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=2)"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    networks: [app]
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+      - --web.enable-lifecycle
+    depends_on:
+      vehicle-service:
+        condition: service_healthy
+      telemetry-service:
+        condition: service_healthy
+      alert-service:
+        condition: service_healthy
+    networks: [app]
+
+  loki:
+    image: grafana/loki:3.2.1
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${LOKI_PORT:-3100}:3100"
+    volumes:
+      - ./monitoring/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki-data:/loki
+    networks: [app]
+
+  alloy:
+    image: grafana/alloy:v1.5.1
+    restart: unless-stopped
+    command: ["run", "--server.http.listen-addr=0.0.0.0:12345", "/etc/alloy/config.alloy"]
+    volumes:
+      - ./monitoring/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - loki
+    networks: [app]
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${GRAFANA_PORT:-3000}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD in .env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/provisioning/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+      - loki
+    networks: [app]
+
+volumes:
+  prometheus-data:
+  loki-data:
+  grafana-data:
+
+networks:
+  app:
+    driver: bridge
